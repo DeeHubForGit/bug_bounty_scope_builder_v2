@@ -1,17 +1,27 @@
-import { fetchMobileAppDetailsForDomain, fetchApiDetails } from './api.js';
+import { fetchMobileAppDetailsForDomain, fetchApiDetails, setRemoteApiBasePath } from './api.js';
 
 // Config variable from template.json
 let showApiDataButton = false;
 
 // Function to load the API button visibility setting from the template JSON
-async function loadApiButtonConfigFromTemplate() {
+async function loadConfigFromTemplate() {
   try {
     const response = await fetch('bug-bounty-document-template.json');
     if (response.ok) {
       const templateData = await response.json();
-      if (templateData && templateData.config && typeof templateData.config.showApiDataButton === 'boolean') {
-        showApiDataButton = templateData.config.showApiDataButton;
-        console.log('API button visibility setting loaded:', showApiDataButton);
+      if (templateData && templateData.config) {
+        const config = templateData.config;
+
+        if (typeof config.showApiDataButton === 'boolean') {
+          showApiDataButton = config.showApiDataButton;
+          console.log('API button visibility setting loaded:', showApiDataButton);
+        }
+
+        // Set API base path for api.js
+        if (typeof config.apiBasePath === 'string') {
+          setRemoteApiBasePath(config.apiBasePath);
+          console.log('✅ API base path set in api.js:', config.apiBasePath);
+        }
       }
     }
   } catch (e) {
@@ -816,7 +826,7 @@ function hideAllSteps() {
 
   document.addEventListener('DOMContentLoaded', async () => {
     // Load API button visibility config from template
-    await loadApiButtonConfigFromTemplate();
+    await loadConfigFromTemplate();
     
     // Check if we're in auto mode and restore if needed
     const isAutoMode = localStorage.getItem('autoMode') === 'true';

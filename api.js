@@ -8,13 +8,12 @@ let CONFIG = {
 // Load config from shared JSON file
 export async function loadConfig() {
   try {
-    const res = await fetch("bug-bounty-document-template.json");
-    const data = await res.json();
-    CONFIG.apiBasePath = data.config.apiBasePath.replace(/\/+$/, "");
-    CONFIG.showApiDataButton = !!data.config.showApiDataButton;
+    const res = await fetch('bug-bounty-document-template.json');
+    const json = await res.json();
+    CONFIG = { ...CONFIG, ...json.config };
     console.log("✅ Config loaded:", CONFIG);
   } catch (err) {
-    console.error("❌ Failed to load config from bug-bounty-document-template.json", err);
+    console.warn("❌ Failed to load config JSON:", err);
   }
 }
 
@@ -129,4 +128,8 @@ export async function fetchMobileAppDetailsForDomain(
  */
 export async function fetchApiDetails(domain) {
   return makeApiRequest("api-details", { domain });
+}
+
+export function setRemoteApiBasePath(path) {
+  CONFIG.apiBasePath = path;
 }
