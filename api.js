@@ -1,21 +1,7 @@
-// api.js — Centralized API calls with local → config.remote fallback
+// api.js — Centralized API calls with hardcoded backend
 
-let CONFIG = {
-  apiBasePath: null,
-  showApiDataButton: false
-};
-
-// Load config from shared JSON file
-export async function loadConfig() {
-  try {
-    const res = await fetch('bug-bounty-document-template.json');
-    const json = await res.json();
-    CONFIG = { ...CONFIG, ...json.config };
-    console.log("✅ Config loaded:", CONFIG);
-  } catch (err) {
-    console.warn("❌ Failed to load config JSON:", err);
-  }
-}
+const API_BASE_URL = "http://207.246.87.60:5000";  // Live: http://207.246.87.60:5000  Local: http://localhost:5000
+const API_TIMEOUT = 60_000;
 
 // Shared fetch options
 const FETCH_OPTIONS = {
@@ -25,9 +11,6 @@ const FETCH_OPTIONS = {
     "Content-Type": "application/json",
   }
 };
-
-const LOCAL_API_URL = "http://localhost:5000";
-const API_TIMEOUT = 60_000;
 
 /**
  * Wrap fetch in a timeout.
@@ -55,57 +38,37 @@ function fetchWithTimeout(url, options = {}) {
 }
 
 /**
- * Try a single POST request to baseURL + endpoint
- */
-async function tryRequest(baseURL, endpoint, body) {
-  const cleanEndpoint = endpoint.replace(/^\//, "");
-  const url = `${baseURL}/${cleanEndpoint}`;
-  console.log(`→ Fetching ${url}`, body);
-
-  const res = await fetchWithTimeout(url, {
-    ...FETCH_OPTIONS,
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-
-  console.log(`← ${url} responded ${res.status}`);
-  if (!res.ok) throw new Error(`Server error ${res.status}`);
-
-  return res.json();
-}
-
-/**
- * Try localhost first, fallback to config.apiBasePath
+ * POST request to baseURL + endpoint
  */
 async function makeApiRequest(endpoint, body) {
-  let lastError = null;
+  const cleanEndpoint = endpoint.replace(/^\//, "");
+  const url = `${API_BASE_URL}/${cleanEndpoint}`;
+  console.log(`→ Fetching ${url}`, body);
 
   try {
-    return await tryRequest(LOCAL_API_URL, endpoint, body);
-  } catch (err) {
-    console.warn("⚠ Local API failed, trying remote:", err);
-    lastError = err;
-  }
+    const res = await fetchWithTimeout(url, {
+      ...FETCH_OPTIONS,
+      method: "POST",
+      body: JSON.stringify(body),
+    });
 
-  try {
-    if (!CONFIG.apiBasePath) throw new Error("No remote API base path configured.");
-    return await tryRequest(CONFIG.apiBasePath, endpoint, body);
-  } catch (err) {
-    console.warn("❌ Remote API failed:", err);
-    lastError = err;
-  }
+    console.log(`← ${url} responded ${res.status}`);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
 
-  const isTimeout = lastError.name === "AbortError" || lastError.message.includes("timed out");
-  return {
-    error: true,
-    message: isTimeout
-      ? `Request timed out after ${API_TIMEOUT / 1000} seconds`
-      : `Connection failed: ${lastError.message}`,
-    details: isTimeout
-      ? "Neither local nor remote API responded in time."
-      : "Could not connect to any API server.",
-    originalError: lastError.toString(),
-  };
+    return res.json();
+  } catch (err) {
+    const isTimeout = err.name === "AbortError" || err.message.includes("timed out");
+    return {
+      error: true,
+      message: isTimeout
+        ? `Request timed out after ${API_TIMEOUT / 1000} seconds`
+        : `Connection failed: ${err.message}`,
+      details: isTimeout
+        ? "API server did not respond in time."
+        : "Could not connect to API server.",
+      originalError: err.toString(),
+    };
+  }
 }
 
 /**
@@ -128,8 +91,4 @@ export async function fetchMobileAppDetailsForDomain(
  */
 export async function fetchApiDetails(domain) {
   return makeApiRequest("api-details", { domain });
-}
-
-export function setRemoteApiBasePath(path) {
-  CONFIG.apiBasePath = path;
 }

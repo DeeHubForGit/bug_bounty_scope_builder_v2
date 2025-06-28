@@ -1,4 +1,4 @@
-import { fetchMobileAppDetailsForDomain, fetchApiDetails, setRemoteApiBasePath } from './api.js';
+import { fetchMobileAppDetailsForDomain, fetchApiDetails } from './api.js';
 
 // Config variable from template.json
 let showApiDataButton = false;
@@ -15,12 +15,6 @@ async function loadConfigFromTemplate() {
         if (typeof config.showApiDataButton === 'boolean') {
           showApiDataButton = config.showApiDataButton;
           console.log('API button visibility setting loaded:', showApiDataButton);
-        }
-
-        // Set API base path for api.js
-        if (typeof config.apiBasePath === 'string') {
-          setRemoteApiBasePath(config.apiBasePath);
-          console.log('✅ API base path set in api.js:', config.apiBasePath);
         }
       }
     }
