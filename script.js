@@ -2806,8 +2806,35 @@ function updateFinalSummaryEditor(template, formData, rewards) {
     if (rewardDetailsEl && rewardDetailsEl.innerHTML.trim()) {
       rewardHTML = rewardDetailsEl.innerHTML.trim();
     } else {
-      const raw = formData.rewardsDescription || '';
+      // Make sure we're getting a string and not an object
+      const raw = typeof formData.rewardsDescription === 'string' ? formData.rewardsDescription : '';
       rewardHTML = raw.replace(/(<div><br><\/div>\s*)+$/i, '').trim();
+      
+      // If rewardHTML is still empty or showing [object Object], try to rebuild from saved tier
+      if (!rewardHTML || rewardHTML.includes('[object Object]')) {
+        const savedTier = localStorage.getItem('selectedRewardTier');
+        if (savedTier) {
+          try {
+            const response = fetch('bug-bounty-document-template.json')
+              .then(res => res.json())
+              .then(data => {
+                const rewards = data.rewards;
+                if (rewards && rewards.tiers && rewards.tiers[savedTier]) {
+                  const tier = rewards.tiers[savedTier];
+                  // Recreate the reward HTML
+                  window.updateRewardDetails(savedTier);
+                }
+              });
+          } catch (e) {
+            console.error('Error rebuilding rewards from saved tier:', e);
+          }
+          
+          // Get updated HTML from rewardDetails element
+          if (rewardDetailsEl && rewardDetailsEl.innerHTML.trim()) {
+            rewardHTML = rewardDetailsEl.innerHTML.trim();
+          }
+        }
+      }
     }
   
     // Clean leading junk divs or blank lines
@@ -2819,6 +2846,11 @@ function updateFinalSummaryEditor(template, formData, rewards) {
   
     // Strip if already included in rewardHTML
     rewardHTML = rewardHTML.replace(new RegExp(sentence.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '').trim();
+    
+    // Final check to ensure we're not returning [object Object]
+    if (rewardHTML.includes('[object Object]')) {
+      rewardHTML = rewardHTML.replace(/\[object Object\]/g, 'Please select a reward tier to define your bounty structure.');
+    }
   
     return `--START REWARDS--${intro}${rewardHTML}--END REWARDS--`;
   }  
