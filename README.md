@@ -1,3 +1,10 @@
+![License: Proprietary](https://img.shields.io/badge/license-Proprietary-blue)
+> ⚠️ Use of this code requires explicit permission and acknowledgment of **Deanna Bath**.
+
+> ⚠️ **Important:** This project is provided for viewing and reference only.  
+> Use of this software without explicit permission from Deanna Bath is prohibited.  
+> Licensing fees and author acknowledgment are required for any usage.
+
 # Bug Bounty Scope Builder v2
 
 A simple and fast way to build a scope for a bug bounty program using automation.  
