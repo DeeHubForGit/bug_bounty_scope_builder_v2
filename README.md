@@ -5,7 +5,7 @@
 > Use of this software without explicit permission from Deanna Bath is prohibited.  
 > Licensing fees and author acknowledgment are required for any usage.
 
-# Bug Bounty Scope Builder v2
+# Bug Bounty Scope Builder Prototype 3 and 4
 
 A simple and fast way to build a scope for a bug bounty program using automation.  
 
